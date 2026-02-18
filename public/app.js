@@ -10,6 +10,7 @@ const completedCount = document.getElementById('completedCount');
 
 // State
 let todos = [];
+let editingId = null;
 
 // Fetch all todos
 async function fetchTodos() {
@@ -18,7 +19,6 @@ async function fetchTodos() {
         todos = await response.json();
         renderTodos();
     } catch (error) {
-        console.error('Error fetching todos:', error);
         alert('Failed to load todos');
     }
 }
@@ -26,100 +26,125 @@ async function fetchTodos() {
 // Add a new todo
 async function addTodo() {
     const text = todoInput.value.trim();
-    
+
     if (!text) {
         alert('Please enter a todo');
         return;
     }
-    
-    try {
-        const response = await fetch(API_BASE, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text }),
-        });
-        
-        if (response.ok) {
-            const newTodo = await response.json();
-            todos.push(newTodo);
-            todoInput.value = '';
-            renderTodos();
-        } else {
-            alert('Failed to add todo');
-        }
-    } catch (error) {
-        console.error('Error adding todo:', error);
-        alert('Failed to add todo');
+
+    const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+    });
+
+    if (response.ok) {
+        const newTodo = await response.json();
+        todos.push(newTodo);
+        todoInput.value = '';
+        renderTodos();
     }
 }
 
-// Toggle todo completion
+// Toggle todo
 async function toggleTodo(id) {
-    try {
-        const response = await fetch(`${API_BASE}/${id}`, {
-            method: 'PUT',
-        });
-        
-        if (response.ok) {
-            const updatedTodo = await response.json();
-            const index = todos.findIndex(t => t.id === id);
-            if (index !== -1) {
-                todos[index] = updatedTodo;
-                renderTodos();
-            }
-        } else {
-            alert('Failed to update todo');
-        }
-    } catch (error) {
-        console.error('Error toggling todo:', error);
-        alert('Failed to update todo');
+    const response = await fetch(`${API_BASE}/${id}`, {
+        method: 'PUT',
+    });
+
+    if (response.ok) {
+        const updated = await response.json();
+        const index = todos.findIndex(t => t.id === id);
+        todos[index] = updated;
+        renderTodos();
     }
 }
 
-// Delete a todo
+// Delete todo
 async function deleteTodo(id) {
-    try {
-        const response = await fetch(`${API_BASE}/${id}`, {
-            method: 'DELETE',
-        });
-        
-        if (response.ok) {
-            todos = todos.filter(t => t.id !== id);
-            renderTodos();
-        } else {
-            alert('Failed to delete todo');
-        }
-    } catch (error) {
-        console.error('Error deleting todo:', error);
-        alert('Failed to delete todo');
+    const response = await fetch(`${API_BASE}/${id}`, {
+        method: 'DELETE',
+    });
+
+    if (response.ok) {
+        todos = todos.filter(t => t.id !== id);
+        renderTodos();
     }
 }
 
-// Render todos to the DOM
+// Start editing
+function startEdit(id) {
+    editingId = id;
+    renderTodos();
+}
+
+// Save edit
+async function saveEdit(id) {
+    const input = document.getElementById(`edit-input-${id}`);
+    const newText = input.value.trim();
+
+    if (!newText) {
+        alert("Todo cannot be empty");
+        return;
+    }
+
+    const response = await fetch(`${API_BASE}/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: newText }),
+    });
+
+    if (response.ok) {
+        const updated = await response.json();
+        const index = todos.findIndex(t => t.id === id);
+        todos[index] = updated;
+        editingId = null;
+        renderTodos();
+    }
+}
+
+// Cancel edit
+function cancelEdit() {
+    editingId = null;
+    renderTodos();
+}
+
+// Render todos
 function renderTodos() {
     if (todos.length === 0) {
         todoList.innerHTML = '<div class="empty-state">No todos yet. Add one above!</div>';
     } else {
-        todoList.innerHTML = todos.map(todo => `
+        todoList.innerHTML = todos.map(todo => {
+
+            if (editingId === todo.id) {
+                return `
+                <div class="todo-item">
+                    <input type="text" id="edit-input-${todo.id}" value="${escapeHtml(todo.text)}" />
+                    <button onclick="saveEdit(${todo.id})">Save</button>
+                    <button onclick="cancelEdit()">Cancel</button>
+                </div>
+                `;
+            }
+
+            return `
             <div class="todo-item ${todo.completed ? 'completed' : ''}">
                 <input 
-                    type="checkbox" 
-                    class="todo-checkbox" 
-                    ${todo.completed ? 'checked' : ''} 
+                    type="checkbox"
+                    ${todo.completed ? 'checked' : ''}
                     onchange="toggleTodo(${todo.id})"
                 />
                 <span class="todo-text">${escapeHtml(todo.text)}</span>
+                <button onclick="startEdit(${todo.id})">Edit</button>
                 <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
-    
+
     updateStats();
 }
 
-// Update statistics
+// Update stats
 function updateStats() {
     const total = todos.length;
     const completed = todos.filter(t => t.completed).length;
@@ -127,20 +152,18 @@ function updateStats() {
     completedCount.textContent = `Completed: ${completed}`;
 }
 
-// Escape HTML to prevent XSS
+// Escape HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-// Event listeners
+// Events
 addBtn.addEventListener('click', addTodo);
 todoInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        addTodo();
-    }
+    if (e.key === 'Enter') addTodo();
 });
 
-// Initialize
+// Init
 fetchTodos();

@@ -124,6 +124,33 @@ app.delete('/api/todos/:id', validateId, async (req, res, next) => {
   }
 });
 
+// Update todo text (Edit feature)
+app.patch('/api/todos/:id', validateId, async (req, res, next) => {
+  try {
+    const { text } = req.body;
+
+    if (!text?.trim()) {
+      return res.status(400).json({ error: 'Todo text is required' });
+    }
+
+    const todos = await readTodos();
+    const todo = todos.find(t => t.id === req.todoId);
+
+    if (!todo) {
+      return res.status(404).json({ error: 'Todo not found' });
+    }
+
+    todo.text = text.trim();
+
+    await writeTodos(todos);
+
+    res.json(todo);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 /* --------------------------
    Error Handler
 ---------------------------*/
