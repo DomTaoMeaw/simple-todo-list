@@ -120,8 +120,8 @@ function renderTodos() {
                 return `
                 <div class="todo-item">
                     <input type="text" id="edit-input-${todo.id}" value="${escapeHtml(todo.text)}" />
-                    <button onclick="saveEdit(${todo.id})">Save</button>
-                    <button onclick="cancelEdit()">Cancel</button>
+                    <button class="save-btn" onclick="saveEdit(${todo.id})">Save</button>
+                    <button class="cancel-btn" onclick="cancelEdit()">Cancel</button>
                 </div>
                 `;
             }
@@ -134,7 +134,7 @@ function renderTodos() {
                     onchange="toggleTodo(${todo.id})"
                 />
                 <span class="todo-text">${escapeHtml(todo.text)}</span>
-                <button onclick="startEdit(${todo.id})">Edit</button>
+                <button class="edit-btn" onclick="startEdit(${todo.id})">Edit</button>
                 <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
             </div>
             `;

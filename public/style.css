@@ -141,3 +141,48 @@ h1 {
     color: #6c757d;
     font-size: 18px;
 }
+
+.edit-btn {
+    background: #9447ff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.edit-btn:hover {
+    background: #c477f7;
+}
+
+.save-btn {
+    background: #3e5bff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.save-btn:hover {
+    background: #7797f7;
+}
+
+.cancel-btn {
+    background: #ff5a39;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.cancel-btn:hover {
+    background: #ff7b5d;
+}
